@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agente Editor de Vídeo</title>
+<meta name="description" content="Envie um vídeo bruto e uma referência: o agente copia o estilo (legenda, headline, corte 9:16) usando ffmpeg e Whisper, 100% local.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <h1>Agente Editor de Vídeo</h1>
+    <p>Manda o vídeo bruto + uma referência de estilo. Legenda automática, headline e corte 9:16 — ffmpeg e Whisper rodando no servidor.</p>
+  </header>
+
+  <div class="steps">
+    <span class="step" data-step="1">1. Enviar vídeos</span>
+    <span class="step" data-step="2">2. Revisar estilo</span>
+    <span class="step" data-step="3">3. Gerar vídeo</span>
+  </div>
+
+  <div id="healthBanner"></div>
+
+  <!-- ===================== STEP 1: UPLOAD ===================== -->
+  <section class="card" id="step1">
+    <h2>Envie os dois vídeos</h2>
+    <p class="hint">O vídeo bruto é o material a editar. A referência é o vídeo cujo estilo (legenda, cores, headline) você quer copiar.</p>
+
+    <form id="uploadForm">
+      <div class="grid-2">
+        <div class="field">
+          <label for="brutoInput">Vídeo bruto</label>
+          <input type="file" id="brutoInput" accept="video/*" required>
+        </div>
+        <div class="field">
+          <label for="refInput">Vídeo de referência</label>
+          <input type="file" id="refInput" accept="video/*" required>
+        </div>
+      </div>
+      <div id="uploadError"></div>
+      <button type="submit" class="btn btn-primary" id="uploadBtn">Analisar referência</button>
+    </form>
+  </section>
+
+  <!-- ===================== STEP 2: REVIEW + STYLE ===================== -->
+  <section class="card hidden" id="step2">
+    <h2>Estilo detectado na referência</h2>
+    <p class="hint">Olhe os frames abaixo e configure o estilo que quer aplicar no vídeo bruto. Nada é processado até você confirmar.</p>
+
+    <div id="durationWarning"></div>
+
+    <div class="frames" id="framesGrid"></div>
+
+    <table class="meta-table" id="metaTable"></table>
+
+    <form id="styleForm">
+      <fieldset>
+        <legend>Formato de saída</legend>
+        <div class="field">
+          <select id="outputFormat">
+            <option value="9:16">9:16 — Reels / TikTok / Stories</option>
+            <option value="1:1">1:1 — Feed quadrado</option>
+            <option value="16:9">16:9 — YouTube horizontal</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Legenda (estilo palavra destacada)</legend>
+        <div class="checkbox-row">
+          <input type="checkbox" id="capEnabled" checked>
+          <label for="capEnabled">Ativar legenda automática</label>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="capFont">Fonte</label>
+            <select id="capFont"></select>
+          </div>
+          <div class="field">
+            <label for="capSize">Tamanho</label>
+            <select id="capSize">
+              <option value="small">Pequeno</option>
+              <option value="medium" selected>Médio</option>
+              <option value="large">Grande</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="capPosition">Posição na tela</label>
+            <select id="capPosition">
+              <option value="top">Topo</option>
+              <option value="center">Centro</option>
+              <option value="bottom" selected>Base</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="capMaxWords">Palavras por linha
+              <span class="sub">Quantas palavras aparecem juntas de cada vez</span>
+            </label>
+            <input type="number" id="capMaxWords" min="1" max="6" value="3">
+          </div>
+          <div class="field">
+            <label for="capTextColor">Cor do texto</label>
+            <input type="color" id="capTextColor" value="#ffffff">
+          </div>
+          <div class="field">
+            <label for="capHighlightColor">Cor da palavra destacada</label>
+            <input type="color" id="capHighlightColor" value="#ffe14d">
+          </div>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="capOutline" checked>
+          <label for="capOutline">Contorno preto (mais legível)</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Headline (gancho no início)</legend>
+        <div class="checkbox-row">
+          <input type="checkbox" id="headEnabled" checked>
+          <label for="headEnabled">Ativar headline</label>
+        </div>
+        <div class="field">
+          <label for="headText">Texto da headline</label>
+          <textarea id="headText" placeholder="Ex: Não é sorte, é fé!"></textarea>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="headFont">Fonte</label>
+            <select id="headFont"></select>
+          </div>
+          <div class="field">
+            <label for="headSize">Tamanho</label>
+            <select id="headSize">
+              <option value="small">Pequeno</option>
+              <option value="medium">Médio</option>
+              <option value="large" selected>Grande</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="headPosition">Posição</label>
+            <select id="headPosition">
+              <option value="top" selected>Topo</option>
+              <option value="center">Centro</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="headDuration">Duração na tela (segundos)</label>
+            <input type="number" id="headDuration" min="1" max="10" step="0.5" value="3">
+          </div>
+          <div class="field">
+            <label for="headColor">Cor do texto</label>
+            <input type="color" id="headColor" value="#ffffff">
+          </div>
+          <div class="field">
+            <label for="headBgColor">Cor do fundo (caixa)</label>
+            <input type="color" id="headBgColor" value="#a63d40">
+          </div>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="headBox" checked>
+          <label for="headBox">Fundo colorido atrás do texto</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Transcrição</legend>
+        <div class="field">
+          <label for="modelSize">Modelo Whisper
+            <span class="sub">Modelos maiores demoram mais mas transcrevem melhor. "tiny"/"base" são bons pra testar rápido.</span>
+          </label>
+          <select id="modelSize">
+            <option value="tiny">tiny (mais rápido)</option>
+            <option value="base">base</option>
+            <option value="small" selected>small (recomendado)</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <div id="confirmError"></div>
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" id="backToStep1">Voltar</button>
+        <button type="submit" class="btn btn-primary" id="confirmBtn">Confirmar e gerar vídeo</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ===================== STEP 3: PROCESSING ===================== -->
+  <section class="card hidden" id="step3">
+    <h2>Gerando o vídeo</h2>
+    <p class="hint">Isso pode levar alguns minutos dependendo da duração do vídeo e do modelo escolhido.</p>
+
+    <ul class="progress-list" id="progressList">
+      <li data-status="transcribing"><span class="dot"></span> Transcrevendo o áudio</li>
+      <li data-status="rendering_test"><span class="dot"></span> Testando o estilo (recorte de 10s)</li>
+      <li data-status="rendering_full"><span class="dot"></span> Renderizando o vídeo inteiro</li>
+      <li data-status="validating"><span class="dot"></span> Validando o arquivo final</li>
+      <li data-status="done"><span class="dot"></span> Pronto</li>
+    </ul>
+
+    <div id="processingError"></div>
+    <div id="doneBox" class="hidden">
+      <video id="resultVideo" controls></video>
+      <div class="actions">
+        <a class="btn btn-primary" id="downloadLink" href="#">Baixar vídeo final</a>
+        <button type="button" class="btn btn-secondary" id="startOverBtn">Editar outro vídeo</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+backend/assets/fonts/*.ttf
+backend/jobs_data/
+__pycache__/
+*.pyc
+.venv/
