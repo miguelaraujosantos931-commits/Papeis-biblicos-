@@ -8,26 +8,45 @@
 
 <!--
   ================================================================
-  PLACEHOLDERS QUE PRECISAM SER SUBSTITUÍDOS ANTES DE PUBLICAR:
+  STATUS DOS PLACEHOLDERS:
 
-  1) [Nome da Marca] — aparece no header e no rodapé.
-  2) [LINK_DE_CHECKOUT] — todos os botões de compra (classe
-     "js-checkout-link") apontam para "#checkout-pendente" como
-     placeholder. Troque pelo link de checkout HOSPEDADO da sua
-     plataforma de pagamento (Hotmart, Kiwify, etc.). Esta página
-     nunca deve coletar dados de cartão — o pagamento acontece
-     inteiramente no domínio do gateway.
-  3) [contato@dominio.com] — e-mail de contato no rodapé.
-  4) Depoimentos (seção "O que as mães estão dizendo") — são
-     placeholders estruturais. Ver comentário na própria seção.
+  - Marca, checkout (Cakto) e contato (WhatsApp) já preenchidos com
+    dados reais.
+  - Depoimentos: seção removida a pedido do cliente. Quando houver
+    depoimentos reais de clientes, adicionar de volta uma seção
+    "O que as mães estão dizendo" com citações e nomes verdadeiros
+    — nunca com texto inventado.
+  - Evento de compra (Purchase): NÃO é disparado por este HTML.
+    É configurado no painel da Cakto, que dispara Purchase na
+    página de confirmação de pagamento dela usando o mesmo Pixel ID
+    (890502213453827).
 
   CABEÇALHOS DE SEGURANÇA RECOMENDADOS (configurar no servidor/CDN):
   Content-Security-Policy, X-Content-Type-Options: nosniff,
   X-Frame-Options: SAMEORIGIN, Referrer-Policy: strict-origin-when-cross-origin,
   Strict-Transport-Security. Nenhuma chave de API ou segredo deve
-  ser colocado neste arquivo.
+  ser colocado neste arquivo (o Pixel abaixo usa somente o snippet
+  público do lado do navegador — nenhum token de Conversions API).
   ================================================================
 -->
+
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '890502213453827');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=890502213453827&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -286,27 +305,6 @@
   .step:nth-child(3) .step-num{ color:var(--green); }
   .step p{ margin:0; font-weight:600; }
 
-  /* ================= DEPOIMENTOS ================= */
-  .testimonials{
-    display:flex;
-    flex-wrap:wrap;
-    gap:1.6rem;
-    margin-top:2.2rem;
-  }
-  .testimonial{
-    flex:1 1 260px;
-    background:var(--paper-light);
-    border:1px solid var(--paper-deep);
-    border-radius:4px;
-    padding:1.5rem 1.4rem;
-    box-shadow:0 8px 16px rgba(27,42,74,.1);
-  }
-  .testimonial:nth-child(1){ transform:rotate(-1.2deg); }
-  .testimonial:nth-child(2){ transform:rotate(1deg); }
-  .testimonial:nth-child(3){ transform:rotate(-.5deg); }
-  .testimonial q{ display:block; font-style:normal; margin:0 0 .8rem 0; }
-  .testimonial cite{ font-family:var(--hand); font-size:1.2rem; font-style:normal; color:var(--ink); opacity:.8; }
-
   /* ================= GARANTIA ================= */
   .guarantee{
     display:flex;
@@ -400,7 +398,7 @@
 
 <header>
   <div class="wrap">
-    <a href="#" class="brand">[Nome da Marca]</a>
+    <a href="#" class="brand">Atividades Pedagógicas</a>
     <a href="#oferta" class="btn btn-primary btn-small">Quero os desenhos</a>
   </div>
 </header>
@@ -413,7 +411,7 @@
     <div class="hero-copy">
       <h1>Seu filho colorindo por horas. Você tomando seu café ainda quente.</h1>
       <p class="subtitle">62 desenhos prontos pra imprimir agora e entregar na mão dele em menos de 2 minutos — sem TV, sem tablet, sem bagunça de tinta.</p>
-      <a href="#checkout-pendente" class="btn btn-primary js-checkout-link">Quero os 62 desenhos agora — R$ 17</a>
+      <a href="https://pay.cakto.com.br/3cq8nd4_734661" class="btn btn-primary js-checkout-link">Quero os 62 desenhos agora — R$ 17</a>
       <p class="hero-note">Entrega automática no e-mail · Imprime em qualquer impressora · Garantia de 7 dias</p>
     </div>
     <div class="hero-art">
@@ -564,28 +562,6 @@
   </div>
 </section>
 
-<!-- ================= DEPOIMENTOS ================= -->
-<section class="section">
-  <div class="wrap">
-    <h2 class="section-title">O que as mães estão dizendo</h2>
-    <!-- SUBSTITUIR por depoimentos reais de clientes antes de publicar. Não publicar com texto placeholder. -->
-    <div class="testimonials">
-      <div class="testimonial">
-        <q>[Citação real do cliente aqui]</q>
-        <cite>[Primeiro nome], [cidade]</cite>
-      </div>
-      <div class="testimonial">
-        <q>[Citação real do cliente aqui]</q>
-        <cite>mãe do(a) [nome da criança], [idade]</cite>
-      </div>
-      <div class="testimonial">
-        <q>[Citação real do cliente aqui]</q>
-        <cite>[Primeiro nome], [cidade]</cite>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ================= GARANTIA ================= -->
 <section class="section" style="background:var(--paper-light);">
   <div class="wrap guarantee">
@@ -606,7 +582,7 @@
     </div>
     <div class="offer-copy">
       <h2>Vamos garantir os seus 62 desenhos?</h2>
-      <a href="#checkout-pendente" class="btn btn-primary js-checkout-link">Quero garantir o meu agora</a>
+      <a href="https://pay.cakto.com.br/3cq8nd4_734661" class="btn btn-primary js-checkout-link">Quero garantir o meu agora</a>
       <p class="hero-note">Pagamento único. Sem assinatura. Acesso imediato.</p>
     </div>
   </div>
@@ -660,7 +636,7 @@
 
 <footer>
   <div class="wrap">
-    <p><strong>[Nome da Marca]</strong> · [contato@dominio.com] · <span id="footerYear"></span></p>
+    <p><strong>Atividades Pedagógicas</strong> · <a href="https://wa.me/5534997910509">Fale no WhatsApp</a> · <span id="footerYear"></span></p>
     <p>Produto digital. Nenhum item físico é enviado.</p>
     <p>Todos os desenhos são de autoria própria. Reprodução ou revenda não autorizada.</p>
   </div>
@@ -671,6 +647,13 @@
   "use strict";
 
   document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+  /* ---------- Meta Pixel: InitiateCheckout ao clicar em comprar ---------- */
+  document.querySelectorAll('.js-checkout-link').forEach(function(link){
+    link.addEventListener('click', function(){
+      if(typeof fbq === 'function'){ fbq('track', 'InitiateCheckout'); }
+    });
+  });
 
   /* ---------- animação única do hero: giz desenhando o sol ---------- */
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
