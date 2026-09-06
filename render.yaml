@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: video-editor-agent
+    runtime: docker
+    rootDir: video-editor-app
+    dockerfilePath: Dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 8000
