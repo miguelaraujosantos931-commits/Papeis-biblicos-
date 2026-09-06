@@ -13,8 +13,16 @@ API FastAPI do agente editor de vídeo. Fluxo:
 from __future__ import annotations
 
 import logging
+import mimetypes
 import shutil
 from pathlib import Path
+
+# Em algumas imagens Docker "slim" (Debian sem /etc/mime.types completo), o
+# módulo mimetypes do Python adivinha tipo errado pra .css/.js (ex: text/plain),
+# e o navegador recusa aplicar o CSS/rodar o JS por "MIME type não suportado".
+# Registrar explicitamente evita depender do banco de MIME types do sistema.
+mimetypes.add_type("text/css", ".css")
+mimetypes.add_type("application/javascript", ".js")
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware

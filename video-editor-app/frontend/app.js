@@ -241,15 +241,58 @@
     });
   }
 
+  const MAX_CONSECUTIVE_FAILURES = 4; // tolera um blip pontual, mas não trava pra sempre em silêncio
+  let consecutiveFailures = 0;
+
   function startPolling() {
     if (pollTimer) clearInterval(pollTimer);
+    consecutiveFailures = 0;
     pollTimer = setInterval(pollStatus, 2500);
     pollStatus();
   }
 
+  function showRetryableError(message) {
+    clearInterval(pollTimer);
+    alertBox(
+      el("processingError"),
+      "error",
+      "<strong>Falha:</strong> " +
+        message +
+        '<br><br><button class="btn btn-secondary" id="retryBtn" type="button">Ajustar estilo e tentar de novo</button>'
+    );
+    const retryBtn = el("retryBtn");
+    if (retryBtn) {
+      retryBtn.addEventListener("click", () => showStep(2));
+    }
+  }
+
   async function pollStatus() {
     try {
-      const job = await fetch(API + "/api/jobs/" + currentJobId).then((r) => r.json());
+      const resp = await fetch(API + "/api/jobs/" + currentJobId);
+
+      if (!resp.ok) {
+        consecutiveFailures++;
+        if (resp.status === 404) {
+          // job sumiu da memória do servidor (ex: processo reiniciou no meio
+          // do processamento) — não adianta insistir, já pode avisar direto.
+          showRetryableError(
+            "o servidor perdeu esse job (provavelmente reiniciou no meio do processamento — " +
+              "comum em planos gratuitos com pouca memória). Volta pra etapa de estilo e tenta de novo."
+          );
+          return;
+        }
+        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+          showRetryableError(
+            "o servidor parou de responder (status " +
+              resp.status +
+              "). Ele pode ter travado ou reiniciado durante o processamento."
+          );
+        }
+        return;
+      }
+      consecutiveFailures = 0;
+
+      const job = await resp.json();
       updateProgressUI(job.status);
 
       if (job.status === "done") {
@@ -259,21 +302,13 @@
         el("resultVideo").src = videoUrl;
         el("downloadLink").href = videoUrl;
       } else if (job.status === "error") {
-        clearInterval(pollTimer);
-        alertBox(
-          el("processingError"),
-          "error",
-          "<strong>Falha:</strong> " +
-            (job.error || "erro desconhecido") +
-            '<br><br><button class="btn btn-secondary" id="retryBtn" type="button">Ajustar estilo e tentar de novo</button>'
-        );
-        const retryBtn = el("retryBtn");
-        if (retryBtn) {
-          retryBtn.addEventListener("click", () => showStep(2));
-        }
+        showRetryableError(job.error || "erro desconhecido");
       }
     } catch (e) {
-      // erro de rede pontual — mantém o polling, não trava a UI
+      consecutiveFailures++;
+      if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+        showRetryableError("não consegui mais falar com o servidor (erro de rede).");
+      }
     }
   }
 
